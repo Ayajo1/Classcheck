@@ -1,0 +1,132 @@
+// ui.js — small DOM helpers shared by kiosk.js and teacher.js.
+
+/** Create an element with attributes/children. h('div', { class: 'x' }, child) */
+export function h(tag, attrs = {}, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else if (k === 'value') el.value = v;
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, String(v));
+  }
+  for (const c of children.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+
+export function clear(node) {
+  if (node) node.replaceChildren();
+}
+
+export function fmtPct(rate) {
+  if (rate == null || Number.isNaN(rate)) return '—';
+  return `${Math.round(rate * 100)}%`;
+}
+
+export function fmtDateLong(d = new Date()) {
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+  });
+}
+
+/* ----------------------------- toast ----------------------------- */
+
+let toastTimer = null;
+
+/** Show a transient toast. kind: '' | 'ok' | 'err' */
+export function toast(message, kind = '', ms = 2600) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = message;
+  t.className = `toast${kind ? ` ${kind}` : ''}`;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), ms);
+  t.classList.remove('hidden');
+}
+
+/* ----------------------------- modal ----------------------------- */
+
+/**
+ * Open a modal. body: node or nodes. buttons: [{ label, value, class }].
+ * Returns a Promise resolving to the clicked button's value (or null on cancel).
+ * Esc and backdrop click cancel (resolve null).
+ */
+export function showModal({ title, body, buttons = [] }) {
+  return new Promise((resolve) => {
+    const root = document.getElementById('modal-root');
+    if (!root) { resolve(null); return; }
+    clear(root);
+    const card = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' });
+    if (title) card.append(h('h2', {}, title));
+    if (body) {
+      const wrap = h('div', { class: 'form-stack' });
+      for (const b of Array.isArray(body) ? body : [body]) {
+        if (b != null) wrap.append(b.nodeType ? b : document.createTextNode(String(b)));
+      }
+      card.append(wrap);
+    }
+    if (buttons.length) {
+      const bar = h('div', { class: 'modal-actions' });
+      for (const b of buttons) {
+        bar.append(h('button', {
+          class: `btn ${b.cls || 'btn-ghost'}`,
+          onclick: () => { close(); resolve(b.value); },
+        }, b.label));
+      }
+      card.append(bar);
+    }
+    const onCancel = () => { close(); resolve(null); };
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); onCancel(); } };
+    function close() {
+      clear(root);
+      root.classList.add('hidden');
+      document.removeEventListener('keydown', onKey, true);
+    }
+    root.classList.remove('hidden');
+    root.append(card);
+    root.addEventListener('click', (e) => { if (e.target === root) onCancel(); }, { once: true });
+    document.addEventListener('keydown', onKey, true);
+    const firstInput = card.querySelector('input, select, button');
+    if (firstInput) firstInput.focus();
+  });
+}
+
+/** Convenience confirm. Resolves true/false. */
+export function confirmModal(message, { title = 'Are you sure?', okLabel = 'Confirm', danger = false } = {}) {
+  return showModal({
+    title,
+    body,
+    buttons: [
+      { label: 'Cancel', value: false, cls: 'btn-ghost' },
+      { label: okLabel, value: true, cls: danger ? 'btn-danger' : 'btn-primary' },
+    ],
+  });
+}
+
+/* --------------------------- files --------------------------- */
+
+export function download(filename, text, mime = 'text/csv;charset=utf-8') {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+export function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || ''));
+    r.onerror = () => reject(r.error || new Error('Could not read file'));
+    r.readAsText(file);
+  });
+}
