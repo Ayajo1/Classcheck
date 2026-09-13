@@ -1,0 +1,108 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && grep -n "export function\|export const" js/models.js && echo "=====" && sed -n '55,100p' js/models.js && echo "=====" && sed -n '262,290p' js/models.js
+Cwd: /workspace/repo
+
+=== STDOUT ===
+4:export const STATUSES = ['present', 'late', 'absent', 'excused'];
+6:export const STATUS_LABELS = {
+14:export const METHODS = ['kiosk', 'teacher'];
+17:export function dateKey(d = new Date()) {
+25:export function timeHHMM(d = new Date()) {
+30:export function isAfterOrAtHHMM(a, b) {
+38:export function statusForArrival(arrivalHHMM, cutoffHHMM) {
+47:export function genCode(len = 4, rng = Math.random) {
+59:export function verifyCode(input, stored) {
+72:export function initials(name = '') {
+80:export function avatarHue(seed = '') {
+90:export function uid(clock = Date.now) {
+101:export function parseCSV(text) {
+144:export function csvEscape(value) {
+153:export function toCSV(rows) {
+164:export function studentsFromCSVRows(rows) {
+223:export function studentsToCSV(students) {
+241:export function computeStats(records) {
+261:export function currentStreak(records) {
+284:export function lateCount(records) {
+295:export function sessionKey(classId, date) {
+302:export function makeRecord({ classId, date, studentId, status, method = 'teacher', time, codeVerified = false }) {
+319:export function makeStudent({ name, studentId = '', seat = '', pin = '' } = {}) {
+334:export function makeClass({ name, room = '', lateCutoff = '08:30' } = {}) {
+=====
+/**
+ * Verify a user-entered code against a stored code.
+ * Accepts digits/whitespace only; case-insensitive; constant-time-ish compare.
+ */
+export function verifyCode(input, stored) {
+  if (typeof input !== 'string' || typeof stored !== 'string') return false;
+  const a = input.replace(/\D/g, '');
+  const b = stored.replace(/\D/g, '');
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/** Initials from a name: "Ada Lovelace" -> "AL", "plato" -> "P". */
+export function initials(name = '') {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+/** Stable pseudo-random color pick from a name (for avatar tiles). */
+export function avatarHue(seed = '') {
+  let h = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return h % 360;
+}
+
+let uidCounter = 0;
+/** Unique-enough id (timestamp + counter + random). Injectable clock for tests. */
+export function uid(clock = Date.now) {
+  uidCounter = (uidCounter + 1) % 10000;
+  return `${clock().toString(36)}-${uidCounter.toString(36)}-${Math.floor(Math.random() * 1e9).toString(36)}`;
+}
+
+/* ------------------------------- CSV I/O ------------------------------- */
+
+/**
+ * Parse CSV text into rows of strings. Handles quotes, embedded commas,
+ * escaped quotes ("") and CRLF. Returns array of arrays.
+ */
+=====
+  if (!records || records.length === 0) return 0;
+  const attended = (s) => s === 'present' || s === 'late' || s === 'excused';
+  const byDate = new Map();
+  for (const rec of records) {
+    if (!rec || !rec.date) continue;
+    const existing = byDate.get(rec.date);
+    if (!existing || (attended(rec.status) && !attended(existing.status))) {
+      byDate.set(rec.date, rec);
+    }
+  }
+  const dates = Array.from(byDate.keys()).sort().reverse();
+  let streak = 0;
+  for (const d of dates) {
+    if (attended(byDate.get(d).status)) streak += 1;
+    else break;
+  }
+  return streak;
+}
+
+/**
+ * Lates count over the last N records by date desc.
+ */
+export function lateCount(records) {
+  let n = 0;
+  for (const rec of records || []) {
+    if (rec && rec.status === 'late') n += 1;
+  }
+  return n;
+}
+
+
+=== STDERR ===

@@ -1,0 +1,121 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && cat index.html && echo "=====CSS-TAIL=====" && tail -c 2000 styles.css
+Cwd: /workspace/repo
+
+=== STDOUT ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClassCheck — classroom attendance without phones</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">&#10003;</span>
+      <span class="brand-name">ClassCheck</span>
+    </div>
+    <nav class="mode-switch" aria-label="Mode">
+      <button id="btn-kiosk" class="mode-btn">Kiosk check-in</button>
+      <button id="btn-teacher" class="mode-btn">Teacher console</button>
+    </nav>
+    <div class="topbar-right">
+      <span id="clock" class="clock" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main id="app" class="app">
+    <section id="view-kiosk" class="view hidden">
+      <div class="view-head">
+        <h1 id="kiosk-class-title">Kiosk check-in</h1>
+        <p class="view-sub" id="kiosk-hint">
+          Students: tap your name, then confirm with your personal code. One check-in per person, per session.
+        </p>
+      </div>
+      <div id="kiosk-body" class="kiosk-body"></div>
+    </section>
+
+    <section id="view-teacher" class="view hidden">
+      <div class="view-head">
+        <div class="teacher-controls">
+          <label class="field">
+            <span class="field-label">Class</span>
+            <select id="teacher-class-select" aria-label="Active class"></select>
+          </label>
+          <button id="btn-add-class" class="btn btn-ghost">+ Class</button>
+        </div>
+        <p class="view-sub" id="teacher-session-info"></p>
+      </div>
+      <div class="teacher-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="session" role="tab">Today's session</button>
+        <button class="tab-btn" data-tab="roster" role="tab">Roster</button>
+        <button class="tab-btn" data-tab="reports" role="tab">Reports</button>
+      </div>
+      <div id="teacher-session" class="tab-panel"></div>
+      <div id="teacher-roster" class="tab-panel hidden"></div>
+      <div id="teacher-reports" class="tab-panel hidden"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <div id="modal-root" class="modal-root hidden"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>=====CSS-TAIL=====
+margin-top: 14px; }
+.history-table th, .history-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.history-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+
+.empty-state {
+  text-align: center; color: var(--muted); padding: 60px 20px;
+  border: 2px dashed var(--border); border-radius: var(--radius);
+}
+.empty-state h2 { color: var(--text); margin-bottom: 8px; }
+
+/* ---------- toast & modal ---------- */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--panel-2); border: 1px solid var(--border);
+  padding: 12px 20px; border-radius: 10px; box-shadow: var(--shadow);
+  z-index: 60; font-size: 14px;
+}
+.toast.ok { border-color: var(--ok); }
+.toast.err { border-color: var(--bad); }
+
+.modal-root {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(5, 8, 15, 0.7);
+}
+.modal {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  width: min(520px, 92vw); max-height: 86vh; overflow: auto;
+  padding: 20px;
+}
+.modal h2 { margin: 0 0 14px; font-size: 18px; }
+.modal .form-stack { display: flex; flex-direction: column; gap: 12px; }
+.modal .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+.session-banner {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 10px 14px; border-radius: var(--radius); margin-bottom: 12px;
+  font-size: 14px;
+}
+.session-banner .live-dot {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--ok);
+  animation: pulse 1.6s infinite;
+}
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+@media (max-width: 640px) {
+  .name-grid { grid-template-columns: repeat(2, 1fr); }
+  .topbar { flex-wrap: wrap; }
+}
+
+
+=== STDERR ===

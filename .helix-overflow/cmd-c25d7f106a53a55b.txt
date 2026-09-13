@@ -1,0 +1,125 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && sed -n '235,320p' js/models.js && echo ===HEADERS=== && sed -n '145,175p' js/models.js
+Cwd: /workspace/repo
+
+=== STDOUT ===
+ * records: [{ status, ... }] any length; order does not matter for rates.
+ * Returns { total, present, late, absent, excused, pending, rate }
+ * rate = (present + late + excused) / (total - pending) when denominator > 0, else null.
+ * "present" count includes only exact 'present'; late tracked separately.
+ * Attendance rate counts present + late + excused as attended.
+ */
+export function computeStats(records) {
+  const counts = { present: 0, late: 0, absent: 0, excused: 0, pending: 0 };
+  let total = 0;
+  for (const rec of records || []) {
+    total += 1;
+    const s = rec && rec.status;
+    if (s in counts) counts[s] += 1;
+    else counts.pending += 1;
+  }
+  const attended = counts.present + counts.late + counts.excused;
+  const denominator = total - counts.pending;
+  const rate = denominator > 0 ? attended / denominator : null;
+  return { total, ...counts, attended, rate };
+}
+
+/**
+ * Current streak of attended days, scanning records sorted by date desc.
+ * A day counts as attended if status is present/late/excused.
+ * Records: [{ date: 'YYYY-MM-DD', status }] — will be sorted internally.
+ */
+export function currentStreak(records) {
+  if (!records || records.length === 0) return 0;
+  const attended = (s) => s === 'present' || s === 'late' || s === 'excused';
+  const byDate = new Map();
+  for (const rec of records) {
+    if (!rec || !rec.date) continue;
+    const existing = byDate.get(rec.date);
+    if (!existing || (attended(rec.status) && !attended(existing.status))) {
+      byDate.set(rec.date, rec);
+    }
+  }
+  const dates = Array.from(byDate.keys()).sort().reverse();
+  let streak = 0;
+  for (const d of dates) {
+    if (attended(byDate.get(d).status)) streak += 1;
+    else break;
+  }
+  return streak;
+}
+
+/**
+ * Lates count over the last N records by date desc.
+ */
+export function lateCount(records) {
+  let n = 0;
+  for (const rec of records || []) {
+    if (rec && rec.status === 'late') n += 1;
+  }
+  return n;
+}
+
+/**
+ * Session lookup key: classId + date.
+ */
+export function sessionKey(classId, date) {
+  return `${classId}|${date}`;
+}
+
+/**
+ * Attendance record shape factory.
+ */
+export function makeRecord({ classId, date, studentId, status, method = 'teacher', time, codeVerified = false }) {
+  return {
+    id: uid(),
+    classId,
+    date,
+    studentId,
+    status,
+    method,
+    time: time || timeHHMM(),
+    codeVerified,
+    createdAt: Date.now(),
+  };
+}
+
+/**
+ * Student factory with defaults.
+ */
+export function makeStudent({ name, studentId = '', seat = '', pin = '' } = {}) {
+  if (!name || !String(name).trim()) throw new Error('Student name is required');
+===HEADERS===
+  const s = value == null ? '' : String(value);
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+/** Serialize rows (arrays) to CSV text with CRLF line endings. */
+export function toCSV(rows) {
+  return rows.map((r) => r.map(csvEscape).join(',')).join('\r\n');
+}
+
+const STUDENT_CSV_HEADER = ['name', 'student_id', 'seat', 'pin'];
+
+/**
+ * Convert parsed CSV rows into student objects.
+ * Header row is detected and consumed. Requires `name`.
+ * Returns { students, errors } where errors is an array of strings.
+ */
+export function studentsFromCSVRows(rows) {
+  const students = [];
+  const errors = [];
+  if (!rows || rows.length === 0) return { students, errors: ['CSV is empty'] };
+
+  let start = 0;
+  const first = rows[0].map((v) => String(v).trim().toLowerCase());
+  if (first.includes('name')) {
+    start = 1;
+  }
+  const idx = {
+    name: first.indexOf('name'),
+
+
+=== STDERR ===

@@ -1,0 +1,148 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && sed -n '47,100p' js/models.js && echo "=====CSV-HELPERS=====" && sed -n '153,238p' js/models.js
+Cwd: /workspace/repo
+
+=== STDOUT ===
+export function genCode(len = 4, rng = Math.random) {
+  let out = '';
+  for (let i = 0; i < len; i += 1) {
+    out += String(Math.floor(rng() * 10));
+  }
+  return out;
+}
+
+/**
+ * Verify a user-entered code against a stored code.
+ * Accepts digits/whitespace only; case-insensitive; constant-time-ish compare.
+ */
+export function verifyCode(input, stored) {
+  if (typeof input !== 'string' || typeof stored !== 'string') return false;
+  const a = input.replace(/\D/g, '');
+  const b = stored.replace(/\D/g, '');
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/** Initials from a name: "Ada Lovelace" -> "AL", "plato" -> "P". */
+export function initials(name = '') {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+/** Stable pseudo-random color pick from a name (for avatar tiles). */
+export function avatarHue(seed = '') {
+  let h = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return h % 360;
+}
+
+let uidCounter = 0;
+/** Unique-enough id (timestamp + counter + random). Injectable clock for tests. */
+export function uid(clock = Date.now) {
+  uidCounter = (uidCounter + 1) % 10000;
+  return `${clock().toString(36)}-${uidCounter.toString(36)}-${Math.floor(Math.random() * 1e9).toString(36)}`;
+}
+
+/* ------------------------------- CSV I/O ------------------------------- */
+
+/**
+ * Parse CSV text into rows of strings. Handles quotes, embedded commas,
+ * escaped quotes ("") and CRLF. Returns array of arrays.
+ */
+=====CSV-HELPERS=====
+export function toCSV(rows) {
+  return rows.map((r) => r.map(csvEscape).join(',')).join('\r\n');
+}
+
+const STUDENT_CSV_HEADER = ['name', 'student_id', 'seat', 'pin'];
+
+/**
+ * Convert parsed CSV rows into student objects.
+ * Header row is detected and consumed. Requires `name`.
+ * Returns { students, errors } where errors is an array of strings.
+ */
+export function studentsFromCSVRows(rows) {
+  const students = [];
+  const errors = [];
+  if (!rows || rows.length === 0) return { students, errors: ['CSV is empty'] };
+
+  let start = 0;
+  const first = rows[0].map((v) => String(v).trim().toLowerCase());
+  if (first.includes('name')) {
+    start = 1;
+  }
+  const idx = {
+    name: first.indexOf('name'),
+    student_id: first.indexOf('student_id'),
+    seat: first.indexOf('seat'),
+    pin: first.indexOf('pin'),
+  };
+  const hasHeader = first.includes('name');
+  if (!hasHeader) {
+    // Positional: name, student_id, seat, pin
+    idx.name = 0; idx.student_id = 1; idx.seat = 2; idx.pin = 3;
+  }
+
+  const seenNames = new Set();
+  for (let r = start; r < rows.length; r += 1) {
+    const lineNo = r + 1;
+    const vals = rows[r].map((v) => String(v).trim());
+    const name = vals[idx.name] || '';
+    if (!name) {
+      errors.push(`Line ${lineNo}: missing name`);
+      continue;
+    }
+    const key = name.toLowerCase();
+    if (seenNames.has(key)) {
+      errors.push(`Line ${lineNo}: duplicate name "${name}"`);
+      continue;
+    }
+    seenNames.add(key);
+    const student = {
+      id: uid(),
+      name,
+      studentId: idx.student_id >= 0 ? vals[idx.student_id] || '' : '',
+      seat: idx.seat >= 0 ? vals[idx.seat] || '' : '',
+      pin: '',
+    };
+    const rawPin = idx.pin >= 0 ? vals[idx.pin] || '' : '';
+    if (rawPin) {
+      const digits = rawPin.replace(/\D/g, '');
+      if (digits.length === 0 || digits.length > 6) {
+        errors.push(`Line ${lineNo}: PIN must be 1–6 digits`);
+      } else {
+        student.pin = digits;
+      }
+    }
+    students.push(student);
+  }
+  return { students, errors };
+}
+
+/** Serialize students to CSV text (with header). */
+export function studentsToCSV(students) {
+  const rows = [STUDENT_CSV_HEADER.slice()];
+  for (const s of students) {
+    rows.push([s.name || '', s.studentId || '', s.seat || '', s.pin || '']);
+  }
+  return toCSV(rows);
+}
+
+/* ----------------------------- stats ----------------------------- */
+
+/**
+ * Compute attendance stats from records for one student.
+ * records: [{ status, ... }] any length; order does not matter for rates.
+ * Returns { total, present, late, absent, excused, pending, rate }
+ * rate = (present + late + excused) / (total - pending) when denominator > 0, else null.
+ * "present" count includes only exact 'present'; late tracked separately.
+
+
+=== STDERR ===

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClassCheck — classroom attendance without phones</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">&#10003;</span>
+      <span class="brand-name">ClassCheck</span>
+    </div>
+    <nav class="mode-switch" aria-label="Mode">
+      <button id="btn-kiosk" class="mode-btn">Kiosk check-in</button>
+      <button id="btn-teacher" class="mode-btn">Teacher console</button>
+    </nav>
+    <div class="topbar-right">
+      <span id="clock" class="clock" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main id="app" class="app">
+    <section id="view-kiosk" class="view hidden">
+      <div class="view-head">
+        <h1 id="kiosk-class-title">Kiosk check-in</h1>
+        <p class="view-sub" id="kiosk-hint">
+          Students: tap your name, then confirm with your personal code. One check-in per person, per session.
+        </p>
+      </div>
+      <div id="kiosk-body" class="kiosk-body"></div>
+    </section>
+
+    <section id="view-teacher" class="view hidden">
+      <div class="view-head">
+        <div class="teacher-controls">
+          <label class="field">
+            <span class="field-label">Class</span>
+            <select id="teacher-class-select" aria-label="Active class"></select>
+          </label>
+          <button id="btn-add-class" class="btn btn-ghost">+ Class</button>
+        </div>
+        <p class="view-sub" id="teacher-session-info"></p>
+      </div>
+      <div class="teacher-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="session" role="tab">Today's session</button>
+        <button class="tab-btn" data-tab="roster" role="tab">Roster</button>
+        <button class="tab-btn" data-tab="reports" role="tab">Reports</button>
+      </div>
+      <div id="teacher-session" class="tab-panel"></div>
+      <div id="teacher-roster" class="tab-panel hidden"></div>
+      <div id="teacher-reports" class="tab-panel hidden"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <div id="modal-root" class="modal-root hidden"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

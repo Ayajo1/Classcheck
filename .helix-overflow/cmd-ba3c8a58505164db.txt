@@ -1,0 +1,117 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && sed -n '1,110p' js/kiosk.js
+Cwd: /workspace/repo
+
+=== STDOUT ===
+// kiosk.js — student self check-in. Students tap their name, then enter
+// their personal code on an on-screen keypad. Three failed attempts lock
+// the tile for 60s so one student cannot check in for their friends.
+
+import * as db from './db.js';
+import * as M from './models.js';
+import { h, clear, toast } from './ui.js';
+
+const LOCK_KEY = 'classcheck.locks';
+const CLASS_KEY = 'classcheck.activeClass';
+const MAX_FAILS = 3;
+const LOCK_MS = 60_000;
+
+function loadLocks() {
+  try { return JSON.parse(localStorage.getItem(LOCK_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveLocks(locks) {
+  localStorage.setItem(LOCK_KEY, JSON.stringify(locks));
+}
+function getLock(studentId) {
+  const l = loadLocks()[studentId];
+  if (l && l.until > Date.now()) return l;
+  return null;
+}
+function recordFail(studentId) {
+  const locks = loadLocks();
+  const prev = locks[studentId] || { count: 0, until: 0 };
+  prev.count += 1;
+  if (prev.count >= MAX_FAILS) {
+    prev.until = Date.now() + LOCK_MS;
+    prev.count = 0;
+    toast(`${'That student is locked for 60s — see teacher'}`, 'err');
+  }
+  locks[studentId] = prev;
+  saveLocks(locks);
+}
+function clearLock(studentId) {
+  const locks = loadLocks();
+  delete locks[studentId];
+  saveLocks(locks);
+}
+
+let refreshTimer = null;
+
+export function stopKiosk() {
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+}
+
+export async function renderKiosk(root) {
+  stopKiosk();
+  const titleEl = root.querySelector('#kiosk-class-title');
+  const bodyEl = root.querySelector('#kiosk-body');
+  const classes = (await db.getClasses()).sort((a, b) => a.name.localeCompare(b.name));
+
+  if (classes.length === 0) {
+    titleEl.textContent = 'Kiosk check-in';
+    clear(bodyEl);
+    bodyEl.append(h('div', { class: 'empty-state' },
+      h('h2', {}, 'No class set up yet'),
+      h('p', {}, 'Ask your teacher to create a class and add students in the Teacher console.')));
+    return;
+  }
+
+  const activeId = localStorage.getItem(CLASS_KEY);
+  const active = classes.find((c) => c.id === activeId) || classes[0];
+  localStorage.setItem(CLASS_KEY, active.id);
+
+  if (classes.length > 1) {
+    titleEl.textContent = 'Kiosk check-in';
+    renderClassPicker(bodyEl, classes);
+    return;
+  }
+  renderClassView(root, active);
+}
+
+function renderClassPicker(bodyEl, classes) {
+  clear(bodyEl);
+  const grid = h('div', { class: 'name-grid' });
+  for (const c of classes) {
+    grid.append(h('div', {
+      class: 'name-tile',
+      onclick: () => {
+        localStorage.setItem(CLASS_KEY, c.id);
+        renderKiosk(document.getElementById('view-kiosk'));
+      },
+    },
+      h('div', { class: 'initials' }, c.name.slice(0, 2).toUpperCase()),
+      h('div', { class: 'name' }, c.name),
+      h('div', { class: 'meta' }, c.room ? `Room ${c.room}` : '')));
+  }
+  bodyEl.append(h('p', { class: 'view-sub' }, 'Tap your class to begin.'), grid);
+}
+
+async function renderClassView(root, klass) {
+  const bodyEl = root.querySelector('#kiosk-body');
+  const students = (await db.getStudentsByClass(klass.id)).sort((a, b) => {
+    const sa = String(a.seat || '999'), sb = String(b.seat || '999');
+    return sa === sb ? a.name.localeCompare(b.name) : (Number(sa) < Number(sb) ? -1 : 1);
+  });
+  const records = await db.getRecordsForSession(klass.id, M.dateKey());
+  const byStudent = new Map(records.map((r) => [r.studentId, r]));
+
+  root.querySelector('#kiosk-class-title').textContent = `${klass.name}${klass.room ? ` · Room ${klass.room}` : ''}`;
+  clear(bodyEl);
+
+  const done = students.filter((s) => byStudent.get(s.id));
+  const lates = done.filter((s) => byStudent.get(s.id).status === 'late');
+  bodyEl.append(h('div', { class: 'kiosk-summary' },
+    h('span', { class: 'summary-chip' }, `Checked in: <b>${done.length}</b> / ${students.length}`),
+
+
+=== STDERR ===

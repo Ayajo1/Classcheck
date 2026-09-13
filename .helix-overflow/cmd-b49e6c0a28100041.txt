@@ -1,0 +1,113 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && for f in js/*.js tests/models.test.mjs; do node --check "$f" || echo "SYNTAX FAIL: $f"; done && echo ALL_SYNTAX_OK && head -50 js/reports.js && echo ===MAIN=== && cat js/main.js
+Cwd: /workspace/repo
+
+=== STDOUT ===
+ALL_SYNTAX_OK
+// reports.js — per-student attendance stats, recent-session dots, CSV export.
+import * as db from './db.js';
+import * as M from './models.js';
+import { h, clear, fmtPct, download, toast, fmtDateLong } from './ui.js';
+
+const STATUS_DOT = {
+  present: 'var(--ok)',
+  late: 'var(--late)',
+  absent: 'var(--bad)',
+  excused: 'var(--excused, #7aa7ff)',
+  pending: 'var(--muted)',
+};
+
+export async function renderReports(panel, classId) {
+  clear(panel);
+  if (!classId) {
+    panel.append(
+      h('div', { class: 'empty-state' },
+        h('h2', {}, 'No class selected'),
+        h('p', {}, 'Pick a class above to see reports.'))
+    );
+    return;
+  }
+
+  const [students, allRecords] = await Promise.all([
+    db.getStudentsByClass(classId),
+    db.getRecords(),
+  ]);
+  const records = allRecords.filter((r) => r.classId === classId);
+  const datesDesc = [...new Set(records.map((r) => r.date))].sort().reverse();
+  const recentDates = datesDesc.slice(0, 10);
+  const klass = (await db.getClasses()).find((c) => c.id === classId);
+  const klassName = klass ? klass.name : 'Class';
+
+  /* Class summary */
+  const classStats = M.computeStats(records);
+  const today = M.dateKey();
+  const todayRecs = records.filter((r) => r.date === today);
+  const todayStats = M.computeStats(todayRecs);
+
+  const summary = h('div', { class: 'report-grid' },
+    h('div', { class: 'report-card' },
+      h('div', { class: 'report-label' }, 'Sessions held'),
+      h('div', { class: 'report-value' }, String(datesDesc.length))),
+    h('div', { class: 'report-card' },
+      h('div', { class: 'report-label' }, 'Class attendance rate'),
+      h('div', { class: 'report-value' }, classStats.total ? fmtPct(classStats.rate) : '—')),
+    h('div', { class: 'report-card' },
+      h('div', { class: 'report-label' }, `Today · ${fmtDateLong()}`),
+      h('div', { class: 'report-value' },
+===MAIN===
+// main.js — entry point: clock, mode switching (kiosk/teacher), bootstrapping.
+import { renderKiosk, stopKiosk } from './kiosk.js';
+import { initTeacher } from './teacher.js';
+
+const MODE_KEY = 'classcheck.mode';
+
+const kioskView = document.getElementById('view-kiosk');
+const teacherView = document.getElementById('view-teacher');
+const btnKiosk = document.getElementById('btn-kiosk');
+const btnTeacher = document.getElementById('btn-teacher');
+const clockEl = document.getElementById('clock');
+
+function tickClock() {
+  if (!clockEl) return;
+  const now = new Date();
+  const date = now.toLocaleDateString(undefined, {
+    weekday: 'short', day: 'numeric', month: 'short',
+  });
+  const time = now.toLocaleTimeString(undefined, {
+    hour: '2-digit', minute: '2-digit',
+  });
+  clockEl.textContent = `${date} · ${time}`;
+}
+
+async function showMode(mode) {
+  const kiosk = mode === 'kiosk';
+  kioskView.classList.toggle('hidden', !kiosk);
+  teacherView.classList.toggle('hidden', kiosk);
+  btnKiosk.classList.toggle('active', kiosk);
+  btnTeacher.classList.toggle('active', !kiosk);
+  try {
+    localStorage.setItem(MODE_KEY, mode);
+  } catch { /* storage unavailable — ignore */ }
+  if (kiosk) {
+    stopKiosk();
+    await renderKiosk(kioskView);
+  } else {
+    await initTeacher(teacherView);
+  }
+}
+
+btnKiosk.addEventListener('click', () => showMode('kiosk'));
+btnTeacher.addEventListener('click', () => showMode('teacher'));
+
+tickClock();
+setInterval(tickClock, 1000);
+
+let storedMode = 'kiosk';
+try {
+  const m = localStorage.getItem(MODE_KEY);
+  if (m === 'kiosk' || m === 'teacher') storedMode = m;
+} catch { /* storage unavailable — keep default */ }
+
+showMode(storedMode);
+
+
+=== STDERR ===

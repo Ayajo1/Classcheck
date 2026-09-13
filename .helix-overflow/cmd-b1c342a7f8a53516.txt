@@ -1,0 +1,125 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && echo '=== models exports ===' && grep -n "^export" js/models.js && echo '=== teacher exports/key fns ===' && grep -n "^export\|^function\|^async function" js/teacher.js | head -30 && echo '=== reports ===' && grep -n "^export\|^function\|^async function" js/reports.js | head -20 && echo '=== db exports ===' && grep -n "^export" js/db.js && echo '=== main ===' && cat js/main.js
+Cwd: /workspace/repo
+
+=== STDOUT ===
+=== models exports ===
+4:export const STATUSES = ['present', 'late', 'absent', 'excused'];
+6:export const STATUS_LABELS = {
+14:export const METHODS = ['kiosk', 'teacher'];
+17:export function dateKey(d = new Date()) {
+25:export function timeHHMM(d = new Date()) {
+30:export function isAfterOrAtHHMM(a, b) {
+38:export function statusForArrival(arrivalHHMM, cutoffHHMM) {
+47:export function genCode(len = 4, rng = Math.random) {
+59:export function verifyCode(input, stored) {
+72:export function initials(name = '') {
+80:export function avatarHue(seed = '') {
+90:export function uid(clock = Date.now) {
+101:export function parseCSV(text) {
+144:export function csvEscape(value) {
+153:export function toCSV(rows) {
+164:export function studentsFromCSVRows(rows) {
+223:export function studentsToCSV(students) {
+241:export function computeStats(records) {
+261:export function currentStreak(records) {
+284:export function lateCount(records) {
+295:export function sessionKey(classId, date) {
+302:export function makeRecord({ classId, date, studentId, status, method = 'teacher', time, codeVerified = false }) {
+319:export function makeStudent({ name, studentId = '', seat = '', pin = '' } = {}) {
+334:export function makeClass({ name, room = '', lateCutoff = '08:30' } = {}) {
+=== teacher exports/key fns ===
+14:export async function initTeacher(root) {
+36:async function refreshClassSelect() {
+48:function updateSessionInfo() {
+62:async function openAddClassModal(root) {
+91:async function renderCurrent(root) {
+113:async function renderSession(root, panel) {
+170:function setFocus(i, students) {
+179:function bindSessionKeys(students) {
+209:function bySeat(a, b) {
+216:async function setStatus(studentId, status) {
+228:async function markAll(status) {
+245:function pushUndo(studentId, before) {
+250:async function undo() {
+270:async function renderRoster(root, panel) {
+386:function openStudentModal(existing) {
+420:async function deleteStudent(student) {
+=== reports ===
+14:export async function renderReports(panel, classId) {
+=== db exports ===
+13:export function openDB() {
+55:export async function getAll(name) {
+61:export async function put(name, value) {
+67:export async function bulkPut(name, values) {
+74:export async function remove(name, key) {
+79:export async function clearStore(name) {
+86:export const getClasses = () => getAll('classes');
+87:export const saveClass = (klass) => put('classes', klass);
+88:export const getStudents = () => getAll('students');
+89:export const saveStudent = (student) => put('students', student);
+90:export const getRecords = () => getAll('records');
+92:export async function getStudentsByClass(classId) {
+100:export async function getRecordsForSession(classId, date) {
+108:export async function getRecordsForStudent(studentId) {
+121:export async function upsertRecord(rec) {
+141:export async function deleteStudentCascade(studentId) {
+152:export async function deleteClassCascade(classId) {
+166:export async function wipeAll() {
+=== main ===
+// main.js — entry point: clock, mode switching (kiosk/teacher), bootstrapping.
+import { renderKiosk, stopKiosk } from './kiosk.js';
+import { initTeacher } from './teacher.js';
+
+const MODE_KEY = 'classcheck.mode';
+
+const kioskView = document.getElementById('view-kiosk');
+const teacherView = document.getElementById('view-teacher');
+const btnKiosk = document.getElementById('btn-kiosk');
+const btnTeacher = document.getElementById('btn-teacher');
+const clockEl = document.getElementById('clock');
+
+function tickClock() {
+  if (!clockEl) return;
+  const now = new Date();
+  const date = now.toLocaleDateString(undefined, {
+    weekday: 'short', day: 'numeric', month: 'short',
+  });
+  const time = now.toLocaleTimeString(undefined, {
+    hour: '2-digit', minute: '2-digit',
+  });
+  clockEl.textContent = `${date} · ${time}`;
+}
+
+async function showMode(mode) {
+  const kiosk = mode === 'kiosk';
+  kioskView.classList.toggle('hidden', !kiosk);
+  teacherView.classList.toggle('hidden', kiosk);
+  btnKiosk.classList.toggle('active', kiosk);
+  btnTeacher.classList.toggle('active', !kiosk);
+  try {
+    localStorage.setItem(MODE_KEY, mode);
+  } catch { /* storage unavailable — ignore */ }
+  if (kiosk) {
+    stopKiosk();
+    await renderKiosk(kioskView);
+  } else {
+    await initTeacher(teacherView);
+  }
+}
+
+btnKiosk.addEventListener('click', () => showMode('kiosk'));
+btnTeacher.addEventListener('click', () => showMode('teacher'));
+
+tickClock();
+setInterval(tickClock, 1000);
+
+let storedMode = 'kiosk';
+try {
+  const m = localStorage.getItem(MODE_KEY);
+  if (m === 'kiosk' || m === 'teacher') storedMode = m;
+} catch { /* storage unavailable — keep default */ }
+
+showMode(storedMode);
+
+
+=== STDERR ===

@@ -1,0 +1,60 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && grep -n "import\|CSV\|parseCSV\|importBtn\|sessionKeyHandler\|onKey\|e.key\|key ===" js/teacher.js | head -40 && echo '=== index.html views ===' && grep -n "view\|tab-btn\|id=\"" index.html
+Cwd: /workspace/repo
+
+=== STDOUT ===
+2:import * as db from './db.js';
+3:import * as M from './models.js';
+4:import {
+8:import { renderReports } from './reports.js';
+131:    h('button', { class: 'btn btn-ghost btn-sm', onclick: () => exportSessionCSV(klass, students, byStudent) }, 'Export session CSV'),
+167:  bindSessionKeys(students);
+179:function bindSessionKeys(students) {
+180:  const onKey = (e) => {
+185:    const key = e.key;
+186:    if (key === 'ArrowDown' || key === 'k') {
+189:    } else if (key === 'ArrowUp' || key === 'j') {
+195:    } else if (key === 'm' || key === 'M') {
+197:    } else if (key === 'u' || key === 'U') {
+201:  document.removeEventListener('keydown', sessionKeyHandler);
+202:  sessionKeyHandler = onKey;
+203:  document.addEventListener('keydown', onKey);
+205:let sessionKeyHandler = null;
+275:    h('button', { class: 'btn btn-ghost btn-sm', id: 'roster-import' }, 'Import CSV'),
+276:    h('button', { class: 'btn btn-ghost btn-sm', id: 'roster-export' }, 'Export CSV'),
+286:      h('p', {}, 'Add students one by one, or import a CSV with columns: name, student_id, seat, pin.')));
+315:    download(`roster-${(klass && klass.name || 'class').replace(/[^a-z0-9]+/gi, '_')}.csv`, M.studentsToCSV(all));
+317:  panel.querySelector('#roster-import').addEventListener('click', async () => {
+320:      title: 'Import roster CSV',
+332:    const rows = M.parseCSV(text);
+333:    const { students, errors: importErrors } = M.studentsFromCSVRows(rows);
+348:    if (importErrors.length > 0) toast(`${importErrors.length} import issue(s): ${importErrors[0]}`, 'err');
+359:      body: [h('pre', { class: 'pin-sheet', style: 'white-space:pre-wrap;font-size:13px' }, M.toCSV(rows))],
+362:        { label: 'Download CSV', value: 'download', cls: 'btn-primary' },
+367:        download(`pins-${(klass && klass.name || 'class').replace(/[^a-z0-9]+/gi, '_')}.csv`, M.toCSV(rows));
+=== index.html views ===
+5:  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+16:      <button id="btn-kiosk" class="mode-btn">Kiosk check-in</button>
+17:      <button id="btn-teacher" class="mode-btn">Teacher console</button>
+20:      <span id="clock" class="clock" aria-live="polite"></span>
+24:  <main id="app" class="app">
+25:    <section id="view-kiosk" class="view hidden">
+26:      <div class="view-head">
+27:        <h1 id="kiosk-class-title">Kiosk check-in</h1>
+28:        <p class="view-sub" id="kiosk-hint">
+32:      <div id="kiosk-body" class="kiosk-body"></div>
+35:    <section id="view-teacher" class="view hidden">
+36:      <div class="view-head">
+40:            <select id="teacher-class-select" aria-label="Active class"></select>
+42:          <button id="btn-add-class" class="btn btn-ghost">+ Class</button>
+44:        <p class="view-sub" id="teacher-session-info"></p>
+47:        <button class="tab-btn active" data-tab="session" role="tab">Today's session</button>
+48:        <button class="tab-btn" data-tab="roster" role="tab">Roster</button>
+49:        <button class="tab-btn" data-tab="reports" role="tab">Reports</button>
+51:      <div id="teacher-session" class="tab-panel"></div>
+52:      <div id="teacher-roster" class="tab-panel hidden"></div>
+53:      <div id="teacher-reports" class="tab-panel hidden"></div>
+57:  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+58:  <div id="modal-root" class="modal-root hidden"></div>
+
+
+=== STDERR ===

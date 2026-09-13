@@ -1,0 +1,12 @@
+{
+  "name": "classcheck",
+  "version": "1.0.0",
+  "description": "Classroom attendance for classes where students don't have phones: kiosk self-check-in with PIN verification plus a teacher console. No build step, no backend — all data in IndexedDB.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "node --test tests/models.test.mjs"
+  },
+  "license": "MIT"
+}

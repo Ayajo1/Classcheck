@@ -1,0 +1,112 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && grep -n "^export" js/kiosk.js js/db.js js/models.js; echo "=====KIOSK SIGNATURES====="; sed -n '1,60p' js/kiosk.js
+Cwd: /workspace/repo
+
+=== STDOUT ===
+js/kiosk.js:46:export function stopKiosk() {
+js/kiosk.js:50:export async function renderKiosk(root) {
+js/db.js:13:export function openDB() {
+js/db.js:55:export async function getAll(name) {
+js/db.js:61:export async function put(name, value) {
+js/db.js:67:export async function bulkPut(name, values) {
+js/db.js:74:export async function remove(name, key) {
+js/db.js:79:export async function clearStore(name) {
+js/db.js:86:export const getClasses = () => getAll('classes');
+js/db.js:87:export const saveClass = (klass) => put('classes', klass);
+js/db.js:88:export const getStudents = () => getAll('students');
+js/db.js:89:export const saveStudent = (student) => put('students', student);
+js/db.js:90:export const getRecords = () => getAll('records');
+js/db.js:92:export async function getStudentsByClass(classId) {
+js/db.js:100:export async function getRecordsForSession(classId, date) {
+js/db.js:108:export async function getRecordsForStudent(studentId) {
+js/db.js:121:export async function upsertRecord(rec) {
+js/db.js:141:export async function deleteStudentCascade(studentId) {
+js/db.js:152:export async function deleteClassCascade(classId) {
+js/db.js:166:export async function wipeAll() {
+js/models.js:4:export const STATUSES = ['present', 'late', 'absent', 'excused'];
+js/models.js:6:export const STATUS_LABELS = {
+js/models.js:14:export const METHODS = ['kiosk', 'teacher'];
+js/models.js:17:export function dateKey(d = new Date()) {
+js/models.js:25:export function timeHHMM(d = new Date()) {
+js/models.js:30:export function isAfterOrAtHHMM(a, b) {
+js/models.js:38:export function statusForArrival(arrivalHHMM, cutoffHHMM) {
+js/models.js:47:export function genCode(len = 4, rng = Math.random) {
+js/models.js:59:export function verifyCode(input, stored) {
+js/models.js:72:export function initials(name = '') {
+js/models.js:80:export function avatarHue(seed = '') {
+js/models.js:90:export function uid(clock = Date.now) {
+js/models.js:101:export function parseCSV(text) {
+js/models.js:144:export function csvEscape(value) {
+js/models.js:153:export function toCSV(rows) {
+js/models.js:164:export function studentsFromCSVRows(rows) {
+js/models.js:223:export function studentsToCSV(students) {
+js/models.js:241:export function computeStats(records) {
+js/models.js:261:export function currentStreak(records) {
+js/models.js:284:export function lateCount(records) {
+js/models.js:295:export function sessionKey(classId, date) {
+js/models.js:302:export function makeRecord({ classId, date, studentId, status, method = 'teacher', time, codeVerified = false }) {
+js/models.js:319:export function makeStudent({ name, studentId = '', seat = '', pin = '' } = {}) {
+js/models.js:334:export function makeClass({ name, room = '', lateCutoff = '08:30' } = {}) {
+=====KIOSK SIGNATURES=====
+// kiosk.js — student self check-in. Students tap their name, then enter
+// their personal code on an on-screen keypad. Three failed attempts lock
+// the tile for 60s so one student cannot check in for their friends.
+
+import * as db from './db.js';
+import * as M from './models.js';
+import { h, clear, toast } from './ui.js';
+
+const LOCK_KEY = 'classcheck.locks';
+const CLASS_KEY = 'classcheck.activeClass';
+const MAX_FAILS = 3;
+const LOCK_MS = 60_000;
+
+function loadLocks() {
+  try { return JSON.parse(localStorage.getItem(LOCK_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveLocks(locks) {
+  localStorage.setItem(LOCK_KEY, JSON.stringify(locks));
+}
+function getLock(studentId) {
+  const l = loadLocks()[studentId];
+  if (l && l.until > Date.now()) return l;
+  return null;
+}
+function recordFail(studentId) {
+  const locks = loadLocks();
+  const prev = locks[studentId] || { count: 0, until: 0 };
+  prev.count += 1;
+  if (prev.count >= MAX_FAILS) {
+    prev.until = Date.now() + LOCK_MS;
+    prev.count = 0;
+    toast(`${'That student is locked for 60s — see teacher'}`, 'err');
+  }
+  locks[studentId] = prev;
+  saveLocks(locks);
+}
+function clearLock(studentId) {
+  const locks = loadLocks();
+  delete locks[studentId];
+  saveLocks(locks);
+}
+
+let refreshTimer = null;
+
+export function stopKiosk() {
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+}
+
+export async function renderKiosk(root) {
+  stopKiosk();
+  const titleEl = root.querySelector('#kiosk-class-title');
+  const bodyEl = root.querySelector('#kiosk-body');
+  const classes = (await db.getClasses()).sort((a, b) => a.name.localeCompare(b.name));
+
+  if (classes.length === 0) {
+    titleEl.textContent = 'Kiosk check-in';
+    clear(bodyEl);
+    bodyEl.append(h('div', { class: 'empty-state' },
+      h('h2', {}, 'No class set up yet'),
+
+
+=== STDERR ===

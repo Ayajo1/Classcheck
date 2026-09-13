@@ -1,0 +1,128 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && sed -n '120,240p' styles.css
+Cwd: /workspace/repo
+
+=== STDOUT ===
+  font-size: 15px;
+}
+input:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+/* ---------- kiosk ---------- */
+.kiosk-body { min-height: 70vh; }
+.name-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+}
+.name-tile {
+  position: relative;
+  border: 2px solid var(--border);
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 18px 14px;
+  min-height: 110px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.06s ease;
+  user-select: none;
+}
+.name-tile:hover { border-color: var(--accent); background: var(--panel-2); }
+.name-tile:active { transform: scale(0.98); }
+.name-tile .initials {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px; color: #fff;
+}
+.name-tile .name { font-weight: 600; text-align: center; }
+.name-tile .meta { font-size: 12px; color: var(--muted); }
+.name-tile.state-present { border-color: var(--ok); background: rgba(46, 204, 143, 0.08); cursor: default; }
+.name-tile.state-present .tile-badge { color: var(--ok); }
+.tile-badge { position: absolute; top: 8px; right: 10px; font-size: 18px; }
+
+/* PIN pad */
+.pin-stage { max-width: 420px; margin: 0 auto; text-align: center; }
+.pin-stage .student-name { font-size: 20px; font-weight: 700; margin: 8px 0 2px; }
+.pin-dots { display: flex; justify-content: center; gap: 12px; margin: 18px 0; }
+.pin-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--panel-2); border: 1px solid var(--border);
+}
+.pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+.pin-dot.error { background: var(--bad); border-color: var(--bad); }
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.keypad button {
+  height: 64px;
+  font-size: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.keypad button:active { transform: scale(0.96); background: #2a3854; }
+.keypad button.key-fn { font-size: 15px; color: var(--muted); }
+.pin-feedback { min-height: 24px; margin-top: 14px; font-size: 15px; }
+.pin-feedback.ok { color: var(--ok); }
+.pin-feedback.err { color: var(--bad); }
+
+.kiosk-summary {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.summary-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+  background: var(--panel);
+}
+.summary-chip b { font-variant-numeric: tabular-nums; }
+
+/* ---------- teacher ---------- */
+.teacher-controls { display: flex; align-items: flex-end; gap: 10px; }
+.teacher-tabs { display: flex; gap: 6px; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
+.tab-btn {
+  background: none; border: none; color: var(--muted);
+  padding: 10px 14px; font-size: 15px; cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.tab-btn.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.toolbar .spacer { flex: 1; }
+.kbd-hint { color: var(--muted); font-size: 12px; }
+kbd {
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 6px; font-size: 11px; font-family: inherit;
+}
+
+.roster-table { width: 100%; border-collapse: collapse; }
+.roster-table th, .roster-table td {
+  text-align: left; padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.roster-table th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+.roster-table tr.row-focus td { background: rgba(79, 140, 255, 0.10); }
+.roster-table tr.row-focus td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
+.status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+
+
+=== STDERR ===

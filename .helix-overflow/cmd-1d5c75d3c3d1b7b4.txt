@@ -1,0 +1,87 @@
+Command: export PATH="/workspace/repo/.helix-venv/bin:/workspace/repo/venv/bin:/workspace/repo/.venv/bin:/workspace/.helix-venv/bin:$PATH" && cd /workspace/repo && head -40 index.html && echo '=== db exports ===' && grep -n "^export\|^  async \|^export async" js/db.js | head -40 && echo '=== kiosk/teacher features ===' && grep -n "function \|const .*=.*=>" js/kiosk.js | head -20
+Cwd: /workspace/repo
+
+=== STDOUT ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClassCheck — classroom attendance without phones</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">&#10003;</span>
+      <span class="brand-name">ClassCheck</span>
+    </div>
+    <nav class="mode-switch" aria-label="Mode">
+      <button id="btn-kiosk" class="mode-btn">Kiosk check-in</button>
+      <button id="btn-teacher" class="mode-btn">Teacher console</button>
+    </nav>
+    <div class="topbar-right">
+      <span id="clock" class="clock" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main id="app" class="app">
+    <section id="view-kiosk" class="view hidden">
+      <div class="view-head">
+        <h1 id="kiosk-class-title">Kiosk check-in</h1>
+        <p class="view-sub" id="kiosk-hint">
+          Students: tap your name, then confirm with your personal code. One check-in per person, per session.
+        </p>
+      </div>
+      <div id="kiosk-body" class="kiosk-body"></div>
+    </section>
+
+    <section id="view-teacher" class="view hidden">
+      <div class="view-head">
+        <div class="teacher-controls">
+          <label class="field">
+            <span class="field-label">Class</span>
+            <select id="teacher-class-select" aria-label="Active class"></select>
+=== db exports ===
+13:export function openDB() {
+55:export async function getAll(name) {
+61:export async function put(name, value) {
+67:export async function bulkPut(name, values) {
+74:export async function remove(name, key) {
+79:export async function clearStore(name) {
+86:export const getClasses = () => getAll('classes');
+87:export const saveClass = (klass) => put('classes', klass);
+88:export const getStudents = () => getAll('students');
+89:export const saveStudent = (student) => put('students', student);
+90:export const getRecords = () => getAll('records');
+92:export async function getStudentsByClass(classId) {
+100:export async function getRecordsForSession(classId, date) {
+108:export async function getRecordsForStudent(studentId) {
+121:export async function upsertRecord(rec) {
+141:export async function deleteStudentCascade(studentId) {
+152:export async function deleteClassCascade(classId) {
+166:export async function wipeAll() {
+=== kiosk/teacher features ===
+14:function loadLocks() {
+18:function saveLocks(locks) {
+21:function getLock(studentId) {
+26:function recordFail(studentId) {
+38:function clearLock(studentId) {
+46:export function stopKiosk() {
+50:export async function renderKiosk(root) {
+54:  const classes = (await db.getClasses()).sort((a, b) => a.name.localeCompare(b.name));
+66:  const active = classes.find((c) => c.id === activeId) || classes[0];
+77:function renderClassPicker(bodyEl, classes) {
+95:async function renderClassView(root, klass) {
+97:  const students = (await db.getStudentsByClass(klass.id)).sort((a, b) => {
+102:  const byStudent = new Map(records.map((r) => [r.studentId, r]));
+107:  const done = students.filter((s) => byStudent.get(s.id));
+108:  const lates = done.filter((s) => byStudent.get(s.id).status === 'late');
+152:function todayLabel() {
+156:function openPinStage(root, klass, student) {
+173:  function renderDots() {
+181:  function press(digit) {
+188:  function submit() {
+
+
+=== STDERR ===
